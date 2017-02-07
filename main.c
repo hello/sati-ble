@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -11,11 +12,19 @@ struct hlo_ble_dev{
     int dd;     /** the socket **/
 };
 
-int advertise(const struct hlo_ble_dev *dev, const char *name)
+static int advertise(const struct hlo_ble_dev *dev, int duration)
 {
-    /*
-     *printf("advertise %d\n", hci_le_set_advertise_enable(dev->dev_id, 1, 3));
-     */
+    int ret = hci_le_set_advertise_enable(dev->dd, 1, 1000);
+    if (ret < 0) {
+        printf("advertise start failed(%d) %d\n", errno, ret);
+        return ret;
+    }
+    sleep(duration);
+    ret = hci_le_set_advertise_enable(dev->dd, 0, 1000);
+    if (ret < 0) {
+        printf("advertise stop failed %d\n", ret);
+        return ret;
+    }
     return 0;
 }
 static int set_device_name(const struct hlo_ble_dev *dev, const char *name)
@@ -48,8 +57,6 @@ int main(int argc, char *argv[])
         return -1;
     }
     set_device_name(&dev, "Sati");
-    /*
-     *advertise(&dev, "Sati");
-     */
+    advertise(&dev, 20);
     return 0;
 }
